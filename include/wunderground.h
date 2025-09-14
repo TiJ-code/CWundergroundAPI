@@ -9,7 +9,9 @@ typedef struct {
     const char* base_url;
 } wu_client_t;
 
-wu_client_t* wu_client_new(const char* api_key);
-void wu_client_delete(wu_client_t* client);
+wu_client_t *wu_client_new(const char* api_key);
+void wu_client_free(wu_client_t *client);
+
+char *wu_get_current_conditions(wu_client_t* client, const char* location);
 
 #endif //CWUNDERGROUNDAPI_WUNDERGROUND_H
