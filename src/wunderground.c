@@ -87,6 +87,20 @@ wu_client_t* wu_client_new(const char* api_key) {
     return client;
 }
 
+wu_client_t* wu_client_new_from_file(FILE* file) {
+    if (!file) return NULL;
+
+    char buffer[256];
+    if (!fgets(buffer, sizeof(buffer), file)) return NULL;
+
+    buffer[strcspn(buffer, "\r\n")] = 0;
+
+    wu_client_t *client = wu_client_new(buffer);
+    fclose(file);
+
+    return client;
+}
+
 void wu_client_free(wu_client_t *client) {
     if (!client) return;
 

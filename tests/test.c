@@ -4,34 +4,14 @@
 
 #include "wunderground.h"
 
-static char *read_api_key(const char *filename) {
-    FILE *f = fopen(filename, "r");
-    if (!f) {
-        perror("fopen");
-        return NULL;
-    }
-
-    char buffer[256];
-    if (!fgets(buffer, sizeof(buffer), f)) {
-        fclose(f);
-        return NULL;
-    }
-
-    fclose(f);
-
-    buffer[strcspn(buffer, "\r\n")] = '\0';
-
-    return strdup(buffer);
-}
-
 int main(void) {
     if (wu_global_init() != 0) {
         fprintf(stderr, "Failed to initialize curl\n");
         return 1;
     }
 
-    const char *api_key = read_api_key("../api_key");
-    wu_client_t *client = wu_client_new(api_key);
+    FILE *api_file = fopen("../api_key", "r");
+    wu_client_t *client = wu_client_new_from_file(api_file);
     if (!client) {
         fprintf(stderr, "Failed to create client\n");
         wu_global_cleanup();
