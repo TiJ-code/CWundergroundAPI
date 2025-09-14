@@ -3,6 +3,8 @@ project(CWundergroundAPI C)
 
 set(CMAKE_C_STANDARD 99)
 
+find_package(CURL REQUIRED)
+
 add_library(CWundergroundAPI SHARED
         src/library.c
         include/wunderground.h
@@ -12,6 +14,8 @@ add_library(CWundergroundAPI SHARED
 target_include_directories(CWundergroundAPI PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+target_link_libraries(CWundergroundAPI PRIVATE CURL::libcurl)
 
 add_executable(weatherclient tests/test.c)
 
