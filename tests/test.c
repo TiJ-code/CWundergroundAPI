@@ -9,9 +9,8 @@ int main(void) {
         fprintf(stderr, "Failed to initialize curl\n");
         return 1;
     }
-
-    FILE *api_file = fopen("../api_key", "r");
-    wu_client_t *client = wu_client_new_from_file(api_file);
+    
+    wu_client_t *client = wu_client_new_from_file("../api_key");
     if (!client) {
         fprintf(stderr, "Failed to create client\n");
         wu_global_cleanup();

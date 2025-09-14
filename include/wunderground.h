@@ -10,7 +10,7 @@ typedef struct {
 } wu_client_t;
 
 wu_client_t *wu_client_new(const char* api_key);
-wu_client_t *wu_client_new_from_file(FILE* file);
+wu_client_t *wu_client_new_from_file(const char* file_name);
 void wu_client_free(wu_client_t *client);
 
 char *wu_get_current_conditions(wu_client_t* client, const char* location);

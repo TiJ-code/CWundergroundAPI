@@ -87,7 +87,8 @@ wu_client_t* wu_client_new(const char* api_key) {
     return client;
 }
 
-wu_client_t* wu_client_new_from_file(FILE* file) {
+wu_client_t* wu_client_new_from_file(const char *filename) {
+    FILE* file = fopen(filename, "r");
     if (!file) return NULL;
 
     char buffer[256];
