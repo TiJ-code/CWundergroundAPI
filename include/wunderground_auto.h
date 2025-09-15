@@ -25,35 +25,35 @@ int wu_get_current_conditions(wu_client_t *client,
                               wu_callbacks_t *callbacks,
                               const char *location);
 
-typedef struct timed_callback_data_t timed_callback_data_t;
+typedef struct wu_timed_callback_data_t wu_timed_callback_data_t;
 
-enum TIME_UNIT {
-    SECONDS, MINUTES, HOURS, DAYS
+enum WU_TIME_UNIT {
+    WU_SECONDS, WU_MINUTES, WU_HOURS, WU_DAYS
 };
 
-timed_callback_data_t *wu_setup_timed_callback(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback(wu_client_t *client,
                             wu_callbacks_t *callbacks,
                             const char *location,
                             unsigned int interval_seconds);
 
-timed_callback_data_t *wu_setup_timed_callback_custom(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback_custom(wu_client_t *client,
                                                    wu_callbacks_t *callbacks,
                                                    const char *location,
-                                                   enum TIME_UNIT interval_unit,
+                                                   enum WU_TIME_UNIT interval_unit,
                                                    unsigned int interval);
 
-timed_callback_data_t *wu_setup_timed_callback_minutely(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback_minutely(wu_client_t *client,
                                                      wu_callbacks_t *callbacks,
                                                      const char *location);
 
-timed_callback_data_t *wu_setup_timed_callback_hourly(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback_hourly(wu_client_t *client,
                                                    wu_callbacks_t *callbacks,
                                                    const char *location);
 
-timed_callback_data_t *wu_setup_timed_callback_daily(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback_daily(wu_client_t *client,
                                                   wu_callbacks_t *callbacks,
                                                   const char *location);
 
-void wu_stop_timed_callback(timed_callback_data_t *data);
+void wu_stop_timed_callback(wu_timed_callback_data_t *data);
 
 #endif //CWUNDERGROUNDAPI_WUNDERGROUND_AUTO_H

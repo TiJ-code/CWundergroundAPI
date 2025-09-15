@@ -61,7 +61,7 @@ int main(void) {
 
     printf("\n--- Setting up timed callbacks (10 seconds) ---\n");
 
-    timed_callback_data_t *timer = wu_setup_timed_callback(client, &callbacks, "DE/Berlin", 10);
+    wu_timed_callback_data_t *timer = wu_setup_timed_callback(client, &callbacks, "DE/Berlin", 10);
     if (!timer) {
         fprintf(stderr, "Failed to setup timed callbacks\n");
         wu_client_free(client);

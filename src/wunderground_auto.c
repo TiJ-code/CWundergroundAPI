@@ -74,7 +74,7 @@ int wu_get_current_conditions(wu_client_t *client, wu_callbacks_t *callbacks, co
 }
 
 /* --- Timed callback structure --- */
-struct timed_callback_data_t {
+struct wu_timed_callback_data_t {
     wu_client_t *client;
     wu_callbacks_t *callbacks;
     const char *location;
@@ -90,7 +90,7 @@ struct timed_callback_data_t {
 /* --- Thread functions --- */
 #ifdef _WIN32
 static DWORD WINAPI timed_fetch_thread_win(LPVOID arg) {
-    timed_callback_data_t *data = (timed_callback_data_t *)arg;
+    wu_timed_callback_data_t *data = (wu_timed_callback_data_t *)arg;
     while (data->running) {
         wu_get_current_conditions(data->client, data->callbacks, data->location);
         Sleep(data->interval * 1000);
@@ -99,7 +99,7 @@ static DWORD WINAPI timed_fetch_thread_win(LPVOID arg) {
 }
 #else
 static void *timed_fetch_thread(void *arg) {
-    timed_callback_data_t *data = (timed_callback_data_t *)arg;
+    wu_timed_callback_data_t *data = (wu_timed_callback_data_t *)arg;
     while (data->running) {
         wu_get_current_conditions(data->client, data->callbacks, data->location);
         sleep(data->interval);
@@ -109,11 +109,11 @@ static void *timed_fetch_thread(void *arg) {
 #endif
 
 /* --- Setup timed callback --- */
-timed_callback_data_t *wu_setup_timed_callback(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback(wu_client_t *client,
                                                wu_callbacks_t *callbacks,
                                                const char *location,
                                                const unsigned int interval_seconds) {
-    timed_callback_data_t *data = malloc(sizeof(timed_callback_data_t));
+    wu_timed_callback_data_t *data = malloc(sizeof(wu_timed_callback_data_t));
     if (!data) return NULL;
 
     data->client = client;
@@ -149,36 +149,36 @@ timed_callback_data_t *wu_setup_timed_callback(wu_client_t *client,
 /* --- Timed callback with custom units --- */
 const unsigned int time_unit_multipliers[] = {1, 60, 3600, 86400};
 
-timed_callback_data_t *wu_setup_timed_callback_custom(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback_custom(wu_client_t *client,
                                                       wu_callbacks_t *callbacks,
                                                       const char *location,
-                                                      const enum TIME_UNIT interval_unit,
+                                                      const enum WU_TIME_UNIT interval_unit,
                                                       const unsigned int interval) {
-    if (!client || !callbacks || !location || interval_unit > DAYS || interval <= 0) return NULL;
+    if (!client || !callbacks || !location || interval_unit > WU_DAYS || interval <= 0) return NULL;
     const unsigned int interval_seconds = interval * time_unit_multipliers[interval_unit];
     return wu_setup_timed_callback(client, callbacks, location, interval_seconds);
 }
 
-timed_callback_data_t *wu_setup_timed_callback_minutely(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback_minutely(wu_client_t *client,
                                                         wu_callbacks_t *callbacks,
                                                         const char *location) {
-    return wu_setup_timed_callback_custom(client, callbacks, location, MINUTES, 1);
+    return wu_setup_timed_callback_custom(client, callbacks, location, WU_MINUTES, 1);
 }
 
-timed_callback_data_t *wu_setup_timed_callback_hourly(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback_hourly(wu_client_t *client,
                                                       wu_callbacks_t *callbacks,
                                                       const char *location) {
-    return wu_setup_timed_callback_custom(client, callbacks, location, HOURS, 1);
+    return wu_setup_timed_callback_custom(client, callbacks, location, WU_HOURS, 1);
 }
 
-timed_callback_data_t *wu_setup_timed_callback_daily(wu_client_t *client,
+wu_timed_callback_data_t *wu_setup_timed_callback_daily(wu_client_t *client,
                                                      wu_callbacks_t *callbacks,
                                                      const char *location) {
-    return wu_setup_timed_callback_custom(client, callbacks, location, DAYS, 1);
+    return wu_setup_timed_callback_custom(client, callbacks, location, WU_DAYS, 1);
 }
 
 /* --- Stop and clean up --- */
-void wu_stop_timed_callback(timed_callback_data_t *data) {
+void wu_stop_timed_callback(wu_timed_callback_data_t *data) {
     if (!data) return;
     data->running = 0;
 
