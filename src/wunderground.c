@@ -1,6 +1,8 @@
 #define CURL_STATICLIB
 #include <curl/curl.h>
 
+#include <json-c/json.h>
+
 #include "../include/wunderground.h"
 
 #include <stdlib.h>
@@ -98,7 +100,7 @@ static char* http_get(const char *url) {
  *         The caller must free() this buffer when done.
  *         Returns NULL if the request fails.
  */
-char *wu_get_current_conditions(wu_client_t *client, const char *location) {
+char *wu_fetch_current_conditions(wu_client_t *client, const char *location) {
     if (!client || !location) return NULL;
 
     char url[512];
@@ -106,7 +108,7 @@ char *wu_get_current_conditions(wu_client_t *client, const char *location) {
         "%s/api/%s/conditions/q/%s.json",
         client->base_url, client->api_key, "52.52,13.41");
 
-    return http_get(url);
+    return http_get(url); // caller frees
 }
 
 /* --- Library setup / teardown --- */

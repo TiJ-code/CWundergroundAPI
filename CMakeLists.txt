@@ -4,6 +4,7 @@ project(CWundergroundAPI C)
 set(CMAKE_C_STANDARD 99)
 
 find_package(CURL REQUIRED)
+find_package(json-c REQUIRED)
 
 add_library(CWundergroundAPI SHARED
         src/library.c
@@ -16,6 +17,7 @@ target_include_directories(CWundergroundAPI PUBLIC
 )
 
 target_link_libraries(CWundergroundAPI PRIVATE CURL::libcurl)
+target_link_libraries(CWundergroundAPI PRIVATE json-c::json-c)
 
 add_executable(weatherclient tests/test.c)
 
