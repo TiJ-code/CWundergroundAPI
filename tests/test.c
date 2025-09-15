@@ -17,7 +17,7 @@ int main(void) {
         return 1;
     }
 
-    char *result = wu_get_current_conditions(client, "Berlin,DE");
+    char *result = wu_fetch_current_conditions(client, "Berlin,DE");
     if (result) {
         printf("Weather response:\n%s\n", result);
         free(result);

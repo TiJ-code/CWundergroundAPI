@@ -4,6 +4,14 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#define sleep(seconds) Sleep((seconds) * 1000)
+#else
+#include <pthread.h>
+#include <unistd.h>
+#endif
+
 static void parse_current_conditions(const char *json, wu_callbacks_t *callbacks) {
     if (!json || !callbacks) return;
 
@@ -12,7 +20,7 @@ static void parse_current_conditions(const char *json, wu_callbacks_t *callbacks
 
     json_object *observations;
     if (json_object_object_get_ex(root, "current_observations", &observations)) {
-        struct json_object *value;
+        json_object *value;
 
         if (json_object_object_get_ex(observations, "temp_c", &value) &&
             callbacks->on_temperature_change) {
@@ -62,4 +70,63 @@ int wu_get_current_conditions(wu_client_t *client, wu_callbacks_t *callbacks, co
     free(json);
 
     return 0;
+}
+
+struct timed_fetch_data_t {
+    wu_client_t *client;
+    wu_callbacks_t *callbacks;
+    const char *location;
+    int interval;
+    volatile int running;
+#ifdef _WIN32
+    unsigned thread_id;
+#else
+    pthread_t thread_id;
+#endif
+};
+
+static void *timed_fetch_thread(void *arg) {
+    timed_fetch_data_t *data = arg;
+    while (data->running) {
+        wu_get_current_conditions(data->client, data->callbacks, data->location);
+        sleep(data->interval);
+    }
+
+    free((char *)data->location);
+    free(data);
+    return 0;
+}
+
+timed_fetch_data_t *wu_setup_timed_callback(wu_client_t *client, wu_callbacks_t *callbacks,
+                            const char *location, int interval_seconds) {
+    timed_fetch_data_t *data = malloc(sizeof(timed_fetch_data_t));
+    if (!data) return NULL;
+
+    data->client = client;
+    data->callbacks = callbacks;
+    data->interval = interval_seconds;
+    data->location = strdup(location);
+    data->running = 1;
+
+    if (!data->location) {
+        free(data);
+        return NULL;
+    }
+
+#ifdef _WIN32
+#else
+    if (pthread_create(&data->thread_id, NULL, timed_fetch_thread, data) != 0) {
+        free((char *)data->location);
+        free(data);
+        return NULL;
+    }
+    pthread_detach(data->thread_id); // run thread independently
+#endif
+
+    return data;
+}
+
+void wu_stop_timed_callback(timed_fetch_data_t *data) {
+    if (!data) return;
+    data->running = 0;
 }

@@ -22,7 +22,16 @@ typedef struct {
 
 /* --- Auto API --- */
 int wu_get_current_conditions(wu_client_t *client,
-                                wu_callbacks_t *callbacks,
-                                const char *location);
+                              wu_callbacks_t *callbacks,
+                              const char *location);
+
+typedef struct timed_fetch_data_t timed_fetch_data_t;
+
+timed_fetch_data_t *wu_setup_timed_callback(wu_client_t *client,
+                            wu_callbacks_t *callbacks,
+                            const char *location,
+                            int interval_seconds);
+
+void wu_stop_timed_callback(timed_fetch_data_t *handle);
 
 #endif //CWUNDERGROUNDAPI_WUNDERGROUND_AUTO_H
