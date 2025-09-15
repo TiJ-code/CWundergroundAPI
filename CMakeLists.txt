@@ -7,7 +7,6 @@ find_package(CURL REQUIRED)
 find_package(json-c REQUIRED)
 
 add_library(CWundergroundAPI SHARED
-        src/library.c
         include/wunderground.h
         src/wunderground.c
         include/wunderground_auto.h
