@@ -6,12 +6,12 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#define sleep(seconds) Sleep((seconds) * 1000)
 #else
 #include <pthread.h>
 #include <unistd.h>
 #endif
 
+/* --- JSON Parsing --- */
 static void parse_current_conditions(const char *json, wu_callbacks_t *callbacks) {
     if (!json || !callbacks) return;
 
@@ -62,6 +62,7 @@ static void parse_current_conditions(const char *json, wu_callbacks_t *callbacks
     json_object_put(root);
 }
 
+/* --- Raw fetch function --- */
 int wu_get_current_conditions(wu_client_t *client, wu_callbacks_t *callbacks, const char *location) {
     char *json = wu_fetch_current_conditions(client, location);
     if (!json) return -1;
@@ -72,34 +73,47 @@ int wu_get_current_conditions(wu_client_t *client, wu_callbacks_t *callbacks, co
     return 0;
 }
 
-struct timed_fetch_data_t {
+/* --- Timed callback structure --- */
+struct timed_callback_data_t {
     wu_client_t *client;
     wu_callbacks_t *callbacks;
     const char *location;
     unsigned int interval;
-    volatile int running;
+    _Atomic int running;
 #ifdef _WIN32
-    unsigned thread_id;
+    HANDLE thread_handle;
 #else
     pthread_t thread_id;
 #endif
 };
 
+/* --- Thread functions --- */
+#ifdef _WIN32
+static DWORD WINAPI timed_fetch_thread_win(LPVOID arg) {
+    timed_callback_data_t *data = (timed_callback_data_t *)arg;
+    while (data->running) {
+        wu_get_current_conditions(data->client, data->callbacks, data->location);
+        Sleep(data->interval * 1000);
+    }
+    return 0;
+}
+#else
 static void *timed_fetch_thread(void *arg) {
-    timed_fetch_data_t *data = arg;
+    timed_callback_data_t *data = (timed_callback_data_t *)arg;
     while (data->running) {
         wu_get_current_conditions(data->client, data->callbacks, data->location);
         sleep(data->interval);
     }
-
-    free((char *)data->location);
-    free(data);
-    return 0;
+    return NULL;
 }
+#endif
 
-timed_fetch_data_t *wu_setup_timed_callback(wu_client_t *client, wu_callbacks_t *callbacks,
-                            const char *location, unsigned int interval_seconds) {
-    timed_fetch_data_t *data = malloc(sizeof(timed_fetch_data_t));
+/* --- Setup timed callback --- */
+timed_callback_data_t *wu_setup_timed_callback(wu_client_t *client,
+                                               wu_callbacks_t *callbacks,
+                                               const char *location,
+                                               const unsigned int interval_seconds) {
+    timed_callback_data_t *data = malloc(sizeof(timed_callback_data_t));
     if (!data) return NULL;
 
     data->client = client;
@@ -113,55 +127,68 @@ timed_fetch_data_t *wu_setup_timed_callback(wu_client_t *client, wu_callbacks_t 
         return NULL;
     }
 
+
 #ifdef _WIN32
+    data->thread_handle = CreateThread(NULL, 0, timed_fetch_thread_win, data, 0, NULL);
+    if (!data->thread_handle) {
+        free((char *)data->location);
+        free(data);
+        return NULL;
+    }
 #else
     if (pthread_create(&data->thread_id, NULL, timed_fetch_thread, data) != 0) {
         free((char *)data->location);
         free(data);
         return NULL;
     }
-    pthread_detach(data->thread_id); // run thread independently
 #endif
 
     return data;
 }
 
-/**
- * seconds per
- * - second
- * - minute
- * - hours
- * - days
- */
+/* --- Timed callback with custom units --- */
 const unsigned int time_unit_multipliers[] = {1, 60, 3600, 86400};
 
-timed_fetch_data_t *wu_setup_timed_callback_custom(wu_client_t *client, wu_callbacks_t *callbacks,
-                                                   const char *location,
-                                                   const enum TIME_UNIT interval_unit,
-                                                   const unsigned int interval) {
-    if (!client || !callbacks || !location || interval <= 0) return NULL;
-
+timed_callback_data_t *wu_setup_timed_callback_custom(wu_client_t *client,
+                                                      wu_callbacks_t *callbacks,
+                                                      const char *location,
+                                                      const enum TIME_UNIT interval_unit,
+                                                      const unsigned int interval) {
+    if (!client || !callbacks || !location || interval_unit > DAYS || interval <= 0) return NULL;
     const unsigned int interval_seconds = interval * time_unit_multipliers[interval_unit];
-
     return wu_setup_timed_callback(client, callbacks, location, interval_seconds);
 }
 
-timed_fetch_data_t *wu_fetch_timed_callback_minutely(wu_client_t *client, wu_callbacks_t *callbacks,
-                                                     const char *location) {
+timed_callback_data_t *wu_setup_timed_callback_minutely(wu_client_t *client,
+                                                        wu_callbacks_t *callbacks,
+                                                        const char *location) {
     return wu_setup_timed_callback_custom(client, callbacks, location, MINUTES, 1);
 }
 
-timed_fetch_data_t *wu_fetch_timed_callback_hourly(wu_client_t *client, wu_callbacks_t *callbacks,
-                                                   const char *location) {
+timed_callback_data_t *wu_setup_timed_callback_hourly(wu_client_t *client,
+                                                      wu_callbacks_t *callbacks,
+                                                      const char *location) {
     return wu_setup_timed_callback_custom(client, callbacks, location, HOURS, 1);
 }
 
-timed_fetch_data_t *wu_fetch_timed_callback_daily(wu_client_t *client, wu_callbacks_t *callbacks,
-                                                   const char *location) {
+timed_callback_data_t *wu_setup_timed_callback_daily(wu_client_t *client,
+                                                     wu_callbacks_t *callbacks,
+                                                     const char *location) {
     return wu_setup_timed_callback_custom(client, callbacks, location, DAYS, 1);
 }
 
-void wu_stop_timed_callback(timed_fetch_data_t *data) {
+/* --- Stop and clean up --- */
+void wu_stop_timed_callback(timed_callback_data_t *data) {
     if (!data) return;
     data->running = 0;
+
+#ifdef _WIN32
+    WaitForSingleObject(data->thread_handle, INFINITE);
+    CloseHandle(data->thread_handle);
+#else
+    pthread_join(data->thread_id, NULL);
+#endif
+
+    free((char *)data->location);
+    free(data);
 }
