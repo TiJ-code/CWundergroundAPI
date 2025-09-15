@@ -27,10 +27,32 @@ int wu_get_current_conditions(wu_client_t *client,
 
 typedef struct timed_fetch_data_t timed_fetch_data_t;
 
+enum TIME_UNIT {
+    SECONDS, MINUTES, HOURS, DAYS
+};
+
 timed_fetch_data_t *wu_setup_timed_callback(wu_client_t *client,
                             wu_callbacks_t *callbacks,
                             const char *location,
-                            int interval_seconds);
+                            unsigned interval_seconds);
+
+timed_fetch_data_t *wu_setup_timed_callback_custom(wu_client_t *client,
+                                                   wu_callbacks_t *callbacks,
+                                                   const char *location,
+                                                   enum TIME_UNIT interval_unit,
+                                                   unsigned interval);
+
+timed_fetch_data_t *wu_fetch_timed_callback_minutely(wu_client_t *client,
+                                                     wu_callbacks_t *callbacks,
+                                                     const char *location);
+
+timed_fetch_data_t *wu_setup_timed_callback_hourly(wu_client_t *client,
+                                                   wu_callbacks_t *callbacks,
+                                                   const char *location);
+
+timed_fetch_data_t *wu_fetch_timed_callback_daily(wu_client_t *client,
+                                                  wu_callbacks_t *callbacks,
+                                                  const char *location);
 
 void wu_stop_timed_callback(timed_fetch_data_t *handle);
 
