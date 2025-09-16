@@ -96,7 +96,19 @@ static char* http_get(const char *url) {
 
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
 
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (compatible; WUClient/1.0)");
+
+    struct curl_slist *headers = NULL;
+    headers = curl_slist_append(headers, "Accept: application/json");
+    headers = curl_slist_append(headers, "Connection: keep-alive");
+    headers = curl_slist_append(headers, "Referer: https://www.weather.com/");
+    headers = curl_slist_append(headers, "Origin: https://www.weather.com/");
+
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
     CURLcode res = curl_easy_perform(curl);
+
+    curl_slist_free_all(headers);
 
     if (res != CURLE_OK) {
         fprintf(stderr, "CURL error: %s\n", curl_easy_strerror(res));
@@ -196,8 +208,23 @@ wu_client_t* wu_client_new_ex(const char* api_key,
     }
 
     client->units = units ? units : WU_UNIT_METRIC;
-    client->language = language ? strdup(language) : "en";
-    client->language_variant = language_variant ? strdup(language_variant) : "GB";
+
+    if (language) {
+        strncpy(client->language, language, 2);
+    } else {
+        strncpy(client->language, "en", 2);
+    }
+    client->language[2] = '\0';
+
+    if (language_variant) {
+        strncpy(client->language_variant, language_variant, 2);
+    } else {
+        strncpy(client->language_variant, "GB", 2);
+    }
+    client->language_variant[2] = '\0';
+
+    client->latitude = 0.0;
+    client->longitude = 0.0;
 
     return client;
 }
@@ -227,7 +254,10 @@ wu_client_t* wu_client_new_from_file_ex(const char *file_name,
                                         const wu_unit_t units,
                                         const char *language, const char *language_variant) {
     FILE* file = fopen(file_name, "r");
-    if (!file) return NULL;
+    if (!file) {
+        perror("fopen failed");
+        return NULL;
+    };
 
     char buffer[256];
     if (!fgets(buffer, sizeof(buffer), file)) {
@@ -241,6 +271,11 @@ wu_client_t* wu_client_new_from_file_ex(const char *file_name,
     return wu_client_new_ex(buffer, units, language, language_variant);;
 }
 
+void wu_client_set_location(wu_client_t *client, const double latitude, const double longitude) {
+    client->latitude = latitude;
+    client->longitude = longitude;
+}
+
 /**
  * @brief Free a client and its resources.
  *
@@ -250,7 +285,5 @@ void wu_client_free(wu_client_t *client) {
     if (!client) return;
 
     free((char *)client->api_key);
-    free((char *)client->language);
-    free((char *)client->language_variant);
     free(client);
 }
