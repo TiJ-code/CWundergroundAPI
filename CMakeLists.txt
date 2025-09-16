@@ -13,6 +13,7 @@ add_library(CWundergroundAPI SHARED
         src/wunderground_auto.c
         include/wunderground_units.h
         src/wunderground_units.c
+        src/wunderground_units_internal.h
 )
 
 target_include_directories(CWundergroundAPI PUBLIC

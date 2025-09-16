@@ -1,4 +1,4 @@
-#include <wunderground_auto.h>
+#include "wunderground_auto.h"
 #include <json-c/json.h>
 #include <stdlib.h>
 #include <string.h>

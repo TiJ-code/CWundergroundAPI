@@ -1,7 +1,7 @@
 #ifndef CWUNDERGROUNDAPI_WUNDERGROUND_H
 #define CWUNDERGROUNDAPI_WUNDERGROUND_H
 
-#include "../include/wunderground_units.h"
+#include "wunderground_units.h"
 
 typedef struct {
     const char *api_key;

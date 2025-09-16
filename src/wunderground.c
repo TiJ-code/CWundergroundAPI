@@ -3,7 +3,8 @@
 
 #include <json-c/json.h>
 
-#include "../include/wunderground.h"
+#include "wunderground.h"
+#include "wunderground_units_internal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -120,7 +121,20 @@ static char* http_get(const char *url) {
  * @return Pointer to JSON response string (caller must free), or NULL on error
  */
 char *wu_fetch_current_conditions(wu_client_t *client, const char *location) {
-    return 0;
+    if (!client || !location) return NULL;
+
+    char url[512];
+
+    snprintf(url, sizeof(url),
+        "%s/wx/observations/current?apiKey=%s&geocode=%s&format=json&units=%c&language=%s-%s",
+        BASE_API_URL,
+        client->api_key,
+        location,
+        wu_unit_to_char(client->units),
+        client->language, client->language_variant
+    );
+
+    return http_get(url);
 }
 
 /* --- Library setup / teardown --- */

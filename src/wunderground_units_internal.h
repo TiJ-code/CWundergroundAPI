@@ -1,0 +1,8 @@
+#ifndef CWUNDERGROUNDAPI_WUNDERGROUND_UNITS_INTERNAL_H
+#define CWUNDERGROUNDAPI_WUNDERGROUND_UNITS_INTERNAL_H
+
+#include "wunderground_units.h"
+
+char wu_unit_to_char(const wu_unit_t unit);
+
+#endif //CWUNDERGROUNDAPI_WUNDERGROUND_UNITS_INTERNAL_H

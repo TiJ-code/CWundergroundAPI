@@ -1,4 +1,4 @@
-#include "../include/wunderground_units.h"
+#include "wunderground_units_internal.h"
 
 char wu_unit_to_char(const wu_unit_t unit) {
     switch (unit) {
