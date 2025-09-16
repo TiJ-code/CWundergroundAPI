@@ -17,9 +17,7 @@ int main(void) {
         return 1;
     }
 
-    const char *location = "52.52,13.41";
-
-    char *json = wu_fetch_current_conditions(client, location);
+    char *json = wu_fetch_current_conditions(client);
     if (!json) {
         fprintf(stderr, "wu_fetch_current_conditions failed\n");
     } else {

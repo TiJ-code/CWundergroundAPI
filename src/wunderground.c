@@ -132,16 +132,19 @@ static char* http_get(const char *url) {
  *
  * @return Pointer to JSON response string (caller must free), or NULL on error
  */
-char *wu_fetch_current_conditions(wu_client_t *client, const char *location) {
-    if (!client || !location) return NULL;
+char *wu_fetch_current_conditions(wu_client_t *client) {
+    if (!client) return NULL;
 
     char url[512];
 
+    double latitude = client->latitude > 0 ? client->latitude : 52.52;
+    double longitude = client->longitude > 0 ? client->longitude : 13.42;
+
     snprintf(url, sizeof(url),
-        "%s/wx/observations/current?apiKey=%s&geocode=%s&format=json&units=%c&language=%s-%s",
+        "%s/wx/observations/current?apiKey=%s&geocode=%.2f,%.2f&format=json&units=%c&language=%s-%s",
         BASE_API_URL,
         client->api_key,
-        location,
+        latitude, longitude,
         wu_unit_to_char(client->units),
         client->language, client->language_variant
     );
@@ -223,8 +226,8 @@ wu_client_t* wu_client_new_ex(const char* api_key,
     }
     client->language_variant[2] = '\0';
 
-    client->latitude = 0.0;
-    client->longitude = 0.0;
+    client->latitude = -1;
+    client->longitude = -1;
 
     return client;
 }

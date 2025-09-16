@@ -26,6 +26,6 @@ void wu_client_free(wu_client_t *client);
 void wu_client_set_location(wu_client_t *client, double latitude, double longitude);
 
 /* --- RAW API --- */
-char *wu_fetch_current_conditions(wu_client_t *client, const char *location);
+char *wu_fetch_current_conditions(wu_client_t *client);
 
 #endif //CWUNDERGROUNDAPI_WUNDERGROUND_H
