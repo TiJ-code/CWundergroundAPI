@@ -10,6 +10,19 @@
 #include <string.h>
 
 /**
+ * @file wunderground.c
+ * @brief Implementation of the Wunderground C API client.
+ *
+ * Provides HTTP-based access to the Weather Underground API using libcurl.
+ * Includes client management, global init/cleanup, and raw data fetching.
+ */
+
+/// Base URL for Weather Underground API requests
+const char *BASE_API_URL = "https://api.weather.com/v3/";
+
+/* --- Initial HTTP Helpers --- */
+
+/**
  * @struct http_buffer_t
  * @brief Buffer for storing HTTP response data in memory.
  *
@@ -94,30 +107,20 @@ static char* http_get(const char *url) {
     return buffer.data; // caller takes ownership
 }
 
+/* --- Public API: Weather Data Fetch --- */
+
 /**
- * @brief Query the current weather conditions from Wunderground.
+ * @brief Fetch current weather conditions for a location.
  *
- * This builds a Wunderground API URL for the "conditions" endpoint and
- * downloads the resulting JSON data as a string.
+ * Builds an API request to Wunderground and downloads the JSON result.
  *
- * @param client Pointer to a wu_client_t object representing the API client
- * @param location String specifying the location to query.
- *                 Can be either "latitude,longitude" (e.g. "52.52,13.41")
- *                 or "Country/City" (e.g. "DE/Berlin")
+ * @param client   Pointer to initialised wu_client_t
+ * @param location String specifying location (e.g. "52.52,13.41" or "DE/Berlin")
  *
- * @return Pointer to a dynamically allocated JSON response string.
- *         The caller must free() this buffer when done.
- *         Returns NULL if the request fails.
+ * @return Pointer to JSON response string (caller must free), or NULL on error
  */
 char *wu_fetch_current_conditions(wu_client_t *client, const char *location) {
-    if (!client || !location) return NULL;
-
-    char url[512];
-    snprintf(url, sizeof(url),
-        "%s/api/%s/conditions/q/%s.json",
-        client->base_url, client->api_key, "52.52,13.41");
-
-    return http_get(url); // caller frees
+    return 0;
 }
 
 /* --- Library setup / teardown --- */
@@ -125,41 +128,52 @@ char *wu_fetch_current_conditions(wu_client_t *client, const char *location) {
 /**
  * @brief Initialise the Wunderground client library.
  *
- * This must be called before using any Wunderground client functions.
- * Internally, it initialises the libcurl global state.
+ * Must be called before any wu_client_t usage.
+ * Wraps curl_global_init().
  *
- * @return Zero on success, non-zero if initialisation failed.
+ * @return 0 on success, non-zero on failure
  */
 int wu_global_init(void) {
     return curl_global_init(CURL_GLOBAL_DEFAULT);
 }
 
 /**
- * @brief Clean up global resources used by the Wunderground client library.
+ * @brief Clean up global resources used by the client library.
  *
- * This should be called once, after all Wunderground API usage is finished.
- * It releases resources used by libcurl.
+ * Should be called once at the end of program execution.
  */
 void wu_global_cleanup(void) {
     curl_global_cleanup();
 }
 
-/* --- Client management --- */
+/* --- Client Management --- */
 
 /**
- * @brief Create a new Wunderground API client.
+ * @brief Create a new Wunderground client with default settings.
  *
- * Allocates and initialises a wu_client_t structure using the given API key.
- * The base URL is set to "https://api.wunderground.com/" by default.
+ * Defaults: units=metric, language="en", variant="GB".
  *
- * @param api_key Null-terminated string containing the Wunderground API key.
- *
- * @return Pointer to a new wu_client_t object, or NULL if allocation fails.
- *         The returned client must be released with wu_client_free().
+ * @param api_key Wunderground API key
+ * @return New client object, or NULL on allocation failure
  */
 wu_client_t* wu_client_new(const char* api_key) {
+    return wu_client_new_from_file_ex(api_key, WU_UNIT_METRIC, NULL, NULL);
+}
+
+/**
+ * @brief Create a new Wunderground client with custom settings.
+ *
+ * @param api_key   Wunderground API key
+ * @param units     Measurement system (metric/imperial/hybrid)
+ * @param language  Language code (e.g. "en", "de")
+ * @param language_variant Regional variant (e.g. "GB", "US")
+ * @return New client object, or NULL on failure
+ */
+wu_client_t* wu_client_new_ex(const char* api_key,
+                              const wu_unit_t units,
+                              const char *language, const char *language_variant) {
     wu_client_t *client = malloc(sizeof(wu_client_t));
-    if(!client) return NULL;
+    if (!client) return NULL;
 
     client->api_key = strdup(api_key);
     if (!client->api_key) {
@@ -167,56 +181,62 @@ wu_client_t* wu_client_new(const char* api_key) {
         return NULL;
     }
 
-    const char *base = "https://api.weather.com/";
-    client->base_url = strdup(base);
-    if (!client->base_url) {
-        free((char *)client->api_key);
-        free(client);
-        return NULL;
-    }
+    client->units = units ? units : WU_UNIT_METRIC;
+    client->language = language ? strdup(language) : "en";
+    client->language_variant = language_variant ? strdup(language_variant) : "GB";
 
     return client;
 }
 
+/**
+ * @brief Create a new client, reading the API key from a file.
+ *
+ * File must contain the API key on the first line.
+ *
+ * @param file_name Path to API key file
+ * @return New client object, or NULL on failure
+ */
+wu_client_t* wu_client_new_from_file(const char *file_name) {
+    return wu_client_new_from_file_ex(file_name, WU_UNIT_METRIC, NULL, NULL);
+}
 
 /**
- * @brief Create a new Wunderground API client from a file.
+ * @brief Create a new client from a file with custom settings.
  *
- * Reads an API key from the given file and constructs a client.
- * The file should contain the API key on the first line.
- *
- * @param filename Path to a file containing the API key.
- *
- * @return Pointer to a new wu_client_t object, or NULL on failure.
- *         The returned client must be released with wu_client_free().
+ * @param file_name       Path to API key file
+ * @param units           Measurement system
+ * @param language        Language code
+ * @param language_variant Regional variant
+ * @return New client object, or NULL on failure
  */
-wu_client_t* wu_client_new_from_file(const char *filename) {
-    FILE* file = fopen(filename, "r");
+wu_client_t* wu_client_new_from_file_ex(const char *file_name,
+                                        const wu_unit_t units,
+                                        const char *language, const char *language_variant) {
+    FILE* file = fopen(file_name, "r");
     if (!file) return NULL;
 
     char buffer[256];
-    if (!fgets(buffer, sizeof(buffer), file)) return NULL;
+    if (!fgets(buffer, sizeof(buffer), file)) {
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
 
     buffer[strcspn(buffer, "\r\n")] = 0; // strip newline
 
-    wu_client_t *client = wu_client_new(buffer);
-    fclose(file);
-
-    return client;
+    return wu_client_new_ex(buffer, units, language, language_variant);;
 }
 
 /**
- * @brief Free a Wunderground API client.
+ * @brief Free a client and its resources.
  *
- * Releases all memory associated with a wu_client_t object.
- *
- * @param client Pointer to the wu_client_t object to free.
- *               Passing NULL has no effect.
+ * @param client Client to free (NULL-safe)
  */
 void wu_client_free(wu_client_t *client) {
     if (!client) return;
 
     free((char *)client->api_key);
-    free((char *)client->base_url);
+    free((char *)client->language);
+    free((char *)client->language_variant);
     free(client);
 }

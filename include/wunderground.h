@@ -1,9 +1,13 @@
 #ifndef CWUNDERGROUNDAPI_WUNDERGROUND_H
 #define CWUNDERGROUNDAPI_WUNDERGROUND_H
 
+#include "../include/wunderground_units.h"
+
 typedef struct {
-    const char* api_key;
-    const char* base_url;
+    const char *api_key;
+    wu_unit_t units;
+    const char *language;
+    const char *language_variant;
 } wu_client_t;
 
 /* --- Initialisation --- */
@@ -12,7 +16,9 @@ void wu_global_cleanup(void);
 
 /* --- Client management --- */
 wu_client_t *wu_client_new(const char* api_key);
+wu_client_t *wu_client_new_ex(const char* api_key, wu_unit_t units, const char *language, const char *language_variant);
 wu_client_t *wu_client_new_from_file(const char* file_name);
+wu_client_t *wu_client_new_from_file_ex(const char* file_name, wu_unit_t units, const char *language, const char *language_variant);
 void wu_client_free(wu_client_t *client);
 
 /* --- RAW API --- */
