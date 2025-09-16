@@ -71,17 +71,26 @@ static char* http_get(const char *url) {
     http_buffer_t buffer = {0}; // empty buffer
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
+
+    curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "gzip");
+
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
 
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+
     CURLcode res = curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
 
     if (res != CURLE_OK) {
+        fprintf(stderr, "CURL error: %s\n", curl_easy_strerror(res));
         free(buffer.data);
         return NULL;
     }
 
+    curl_easy_cleanup(curl);
     return buffer.data; // caller takes ownership
 }
 
@@ -158,7 +167,7 @@ wu_client_t* wu_client_new(const char* api_key) {
         return NULL;
     }
 
-    const char *base = "https://api.wunderground.com/";
+    const char *base = "https://api.weather.com/";
     client->base_url = strdup(base);
     if (!client->base_url) {
         free((char *)client->api_key);
