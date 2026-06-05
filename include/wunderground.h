@@ -3,6 +3,8 @@
 #ifndef WUNDERGROUND_H
 #define WUNDERGROUND_H
 
+#include <stdbool.h>
+
 #define WU_MISSING_INT INT_MIN
 
 typedef enum { WU_XML } WUFetchType;
@@ -11,8 +13,13 @@ typedef enum { METRIC, IMPERIAL, HYBRID } WUUnitType;
 
 typedef struct {
   WUFetchType fetchType;
+  WUUnitType unitType;
+} WUConfig;
+
+typedef struct {
   const char *stationId;
   const char *apiKey;
+  WUConfig config;
 } WUInstance;
 
 typedef struct {
@@ -48,7 +55,7 @@ typedef struct {
   WUObservation metrics;
 } WUObservationVerbose;
 
-bool wu_init(char *stationId, char *apiKey, WUInstance *out);
+WUInstance *wu_init(char *stationId, char *apiKey, WUConfig config);
 
 bool wu_free(WUInstance *out);
 

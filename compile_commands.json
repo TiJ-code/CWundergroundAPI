@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/home/tij/Development/CWundergroundAPI",
+  "command": "/usr/bin/cc -DCWundergroundAPI_EXPORTS -I/home/tij/Development/CWundergroundAPI/include -std=gnu99 -fPIC -o CMakeFiles/CWundergroundAPI.dir/src/wunderground.c.o -c /home/tij/Development/CWundergroundAPI/src/wunderground.c",
+  "file": "/home/tij/Development/CWundergroundAPI/src/wunderground.c",
+  "output": "CMakeFiles/CWundergroundAPI.dir/src/wunderground.c.o"
+},
+{
+  "directory": "/home/tij/Development/CWundergroundAPI",
+  "command": "/usr/bin/cc  -I/home/tij/Development/CWundergroundAPI/include -std=gnu99 -o CMakeFiles/test_runner.dir/test/test.c.o -c /home/tij/Development/CWundergroundAPI/test/test.c",
+  "file": "/home/tij/Development/CWundergroundAPI/test/test.c",
+  "output": "CMakeFiles/test_runner.dir/test/test.c.o"
+}
+]
