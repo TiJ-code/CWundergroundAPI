@@ -6,23 +6,21 @@
 #include <stdbool.h>
 
 #define WU_MISSING_INT INT_MIN
+#define WU_STATION_ID_LENGTH 8
+#define WU_API_KEY_LENGTH 32
 
 typedef enum { WU_XML } WUFetchType;
 
-typedef enum { METRIC, IMPERIAL, HYBRID } WUUnitType;
+typedef enum { WU_METRIC, WU_IMPERIAL, WU_HYBRID } WUUnitType;
 
-typedef struct {
+typedef struct wu_config {
   WUFetchType fetchType;
   WUUnitType unitType;
 } WUConfig;
 
-typedef struct {
-  const char *stationId;
-  const char *apiKey;
-  WUConfig config;
-} WUInstance;
+typedef struct wu_instance WUInstance;
 
-typedef struct {
+typedef struct wu_observation {
   WUUnitType units;
 
   float solarRadition;
@@ -43,7 +41,7 @@ typedef struct {
   float rainTotal;
 } WUObservation;
 
-typedef struct {
+typedef struct wu_observation_verbose {
   char *stationId;
   char *observeTimeUTC;
   char *observeTimeLocal;
@@ -58,5 +56,7 @@ typedef struct {
 WUInstance *wu_init(char *stationId, char *apiKey, WUConfig config);
 
 bool wu_free(WUInstance *out);
+
+bool wu_isCurlInitialized(WUInstance *instance);
 
 #endif // WUNDERGROUND_H
