@@ -59,4 +59,8 @@ bool wu_free(WUInstance *out);
 
 bool wu_isCurlInitialized(WUInstance *instance);
 
+bool wu_fetch(WUInstance *instance, WUObservation *out);
+
+bool wu_fetch_verbose(WUInstance *instance, WUObservationVerbose *out);
+
 #endif // WUNDERGROUND_H
